@@ -101,6 +101,16 @@ Premiar estructuras menos lineales y mejor distribuidas.
   - ramificación útil
   - penalización por apelotonamiento o líneas excesivas
 
+### Estado aplicado
+
+- Se incorporaron penalizaciones suaves específicas de cuadrícula lógica en `mazmorra/evaluacion/penalizaciones.py`.
+- La evaluación ahora considera:
+  - dispersión por caja lógica y uso de ejes
+  - densidad de ocupación dentro de la caja lógica
+  - proporción de habitaciones fuera del camino principal y bifurcaciones grado 3
+  - elongación excesiva de la caja lógica como proxy de linealidad
+- Se exponen métricas adicionales en el reporte para facilitar tuning posterior de pesos.
+
 ### Riesgo
 
 Bajo a medio. Depende del tuning de pesos.

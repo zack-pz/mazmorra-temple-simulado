@@ -8,12 +8,17 @@ from mazmorra.evaluacion.penalizaciones import (
     habitaciones_tesoro_desde_estado,
     minimos_tesoro_por_tamano,
     obtener_boss,
+    penalizacion_dispersion_cuadricula,
     penalizacion_faltante_normalizada,
     penalizacion_interes_tesoros,
+    penalizacion_lineas_excesivas,
+    penalizacion_ocupacion_cuadricula,
     penalizacion_progresion_dificultad,
+    penalizacion_ramificacion_util,
     penalizacion_rango,
     penalizacion_salas_vacias,
     proporcion_piso,
+    resumen_cuadricula_logica,
 )
 
 
@@ -74,6 +79,11 @@ def evaluar_mazmorra(
     penalizacion_suave_progresion_dificultad = penalizacion_progresion_dificultad(estado.habitaciones, distancias_desde_inicio)
     penalizacion_suave_salas_vacias = penalizacion_salas_vacias(estado.habitaciones)
     penalizacion_suave_proporcion_piso = penalizacion_rango(proporcion_actual_piso, 0.22, 0.50)
+    penalizacion_suave_dispersion_cuadricula = penalizacion_dispersion_cuadricula(estado.habitaciones)
+    penalizacion_suave_ocupacion_cuadricula = penalizacion_ocupacion_cuadricula(estado.habitaciones)
+    penalizacion_suave_ramificacion_util = penalizacion_ramificacion_util(adyacencias, camino_principal)
+    penalizacion_suave_lineas_excesivas = penalizacion_lineas_excesivas(estado.habitaciones)
+    resumen_cuadricula = resumen_cuadricula_logica(estado.habitaciones)
 
     penalizaciones = {
         "conectividad_dura": penalizacion_dura_conectividad,
@@ -88,6 +98,10 @@ def evaluar_mazmorra(
         "progresion_dificultad_suave": penalizacion_suave_progresion_dificultad,
         "salas_vacias_suave": penalizacion_suave_salas_vacias,
         "proporcion_piso_suave": penalizacion_suave_proporcion_piso,
+        "dispersion_cuadricula_suave": penalizacion_suave_dispersion_cuadricula,
+        "ocupacion_cuadricula_suave": penalizacion_suave_ocupacion_cuadricula,
+        "ramificacion_util_suave": penalizacion_suave_ramificacion_util,
+        "lineas_excesivas_suave": penalizacion_suave_lineas_excesivas,
     }
 
     terminos_ponderados = {
@@ -103,6 +117,10 @@ def evaluar_mazmorra(
         "progresion_dificultad_suave": penalizaciones["progresion_dificultad_suave"] * pesos.progresion_dificultad_suave,
         "salas_vacias_suave": penalizaciones["salas_vacias_suave"] * pesos.salas_vacias_suave,
         "proporcion_piso_suave": penalizaciones["proporcion_piso_suave"] * pesos.proporcion_piso_suave,
+        "dispersion_cuadricula_suave": penalizaciones["dispersion_cuadricula_suave"] * pesos.dispersion_cuadricula_suave,
+        "ocupacion_cuadricula_suave": penalizaciones["ocupacion_cuadricula_suave"] * pesos.ocupacion_cuadricula_suave,
+        "ramificacion_util_suave": penalizaciones["ramificacion_util_suave"] * pesos.ramificacion_util_suave,
+        "lineas_excesivas_suave": penalizaciones["lineas_excesivas_suave"] * pesos.lineas_excesivas_suave,
     }
 
     return {
@@ -132,6 +150,15 @@ def evaluar_mazmorra(
             "tesoros_bloqueados": tesoros_bloqueados,
             "proporcion_piso": proporcion_actual_piso,
             "boss_en_camino_principal": boss_en_camino,
+            "filas_usadas": int(resumen_cuadricula["filas_usadas"]),
+            "columnas_usadas": int(resumen_cuadricula["columnas_usadas"]),
+            "alto_caja_logica": int(resumen_cuadricula["alto_caja"]),
+            "ancho_caja_logica": int(resumen_cuadricula["ancho_caja"]),
+            "area_caja_logica": int(resumen_cuadricula["area_caja"]),
+            "densidad_caja_logica": resumen_cuadricula["densidad_caja"],
+            "aspecto_caja_logica": resumen_cuadricula["aspecto_caja"],
+            "habitaciones_fuera_camino_principal": max(0, cantidad_habitaciones - len(camino_principal)),
+            "cantidad_bifurcaciones": sum(1 for vecinos in adyacencias.values() if len(vecinos) == 3),
             "tipos_sala": dict(tipos),
         },
         "penalizaciones": penalizaciones,

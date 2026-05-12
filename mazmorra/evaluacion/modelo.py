@@ -45,3 +45,7 @@ class PesosObjetivo:
     progresion_dificultad_suave: float = 80.0
     salas_vacias_suave: float = 55.0
     proporcion_piso_suave: float = 30.0
+    dispersion_cuadricula_suave: float = 60.0
+    ocupacion_cuadricula_suave: float = 50.0
+    ramificacion_util_suave: float = 75.0
+    lineas_excesivas_suave: float = 65.0

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from math import inf
+from math import ceil, inf
 from typing import Iterable
 
 import numpy as np
@@ -125,3 +125,101 @@ def penalizacion_salas_vacias(habitaciones: dict[str, dict]) -> float:
 
     vacias = [habitacion for habitacion in candidatas if habitacion.get("enemigos", 0) <= 0 and habitacion.get("cofres", 0) <= 0]
     return len(vacias) / len(candidatas)
+
+
+def resumen_cuadricula_logica(habitaciones: dict[str, dict]) -> dict[str, float]:
+    celdas = [
+        (habitacion.get("fila"), habitacion.get("columna"))
+        for habitacion in habitaciones.values()
+        if habitacion.get("fila") is not None and habitacion.get("columna") is not None
+    ]
+    if not celdas:
+        return {
+            "cantidad_habitaciones": 0,
+            "filas_usadas": 0,
+            "columnas_usadas": 0,
+            "alto_caja": 0,
+            "ancho_caja": 0,
+            "area_caja": 0,
+            "densidad_caja": 0.0,
+            "aspecto_caja": 0.0,
+        }
+
+    filas = sorted({fila for fila, _ in celdas})
+    columnas = sorted({columna for _, columna in celdas})
+    min_fila = min(fila for fila, _ in celdas)
+    max_fila = max(fila for fila, _ in celdas)
+    min_columna = min(columna for _, columna in celdas)
+    max_columna = max(columna for _, columna in celdas)
+    alto_caja = max_fila - min_fila + 1
+    ancho_caja = max_columna - min_columna + 1
+    area_caja = alto_caja * ancho_caja
+    densidad_caja = len(celdas) / area_caja if area_caja > 0 else 0.0
+    lado_menor = max(1, min(alto_caja, ancho_caja))
+    aspecto_caja = max(alto_caja, ancho_caja) / lado_menor
+
+    return {
+        "cantidad_habitaciones": len(celdas),
+        "filas_usadas": len(filas),
+        "columnas_usadas": len(columnas),
+        "alto_caja": alto_caja,
+        "ancho_caja": ancho_caja,
+        "area_caja": area_caja,
+        "densidad_caja": densidad_caja,
+        "aspecto_caja": aspecto_caja,
+    }
+
+
+def penalizacion_dispersion_cuadricula(habitaciones: dict[str, dict]) -> float:
+    resumen = resumen_cuadricula_logica(habitaciones)
+    cantidad_habitaciones = int(resumen["cantidad_habitaciones"])
+    if cantidad_habitaciones <= 1:
+        return 0.0
+
+    objetivo_area = min(36, max(cantidad_habitaciones, ceil(cantidad_habitaciones * 1.45)))
+    objetivo_eje = 3 if cantidad_habitaciones <= 10 else 4
+    penalizacion_area = penalizacion_faltante_normalizada(resumen["area_caja"], objetivo_area)
+    penalizacion_filas = penalizacion_faltante_normalizada(resumen["filas_usadas"], objetivo_eje)
+    penalizacion_columnas = penalizacion_faltante_normalizada(resumen["columnas_usadas"], objetivo_eje)
+    penalizacion_ejes = (penalizacion_filas + penalizacion_columnas) / 2.0
+    return (penalizacion_area + penalizacion_ejes) / 2.0
+
+
+def penalizacion_ocupacion_cuadricula(habitaciones: dict[str, dict]) -> float:
+    resumen = resumen_cuadricula_logica(habitaciones)
+    if resumen["area_caja"] <= 0:
+        return 0.0
+    return penalizacion_rango(resumen["densidad_caja"], 0.55, 0.9)
+
+
+def penalizacion_ramificacion_util(
+    adyacencias: dict[str, set[str]],
+    camino_principal: list[str],
+) -> float:
+    cantidad_habitaciones = len(adyacencias)
+    if cantidad_habitaciones <= 2:
+        return 0.0
+
+    habitaciones_fuera_camino = max(0, cantidad_habitaciones - len(camino_principal))
+    proporcion_fuera_camino = habitaciones_fuera_camino / cantidad_habitaciones
+    if cantidad_habitaciones <= 10:
+        objetivo_fuera_camino = 0.12
+    elif cantidad_habitaciones <= 15:
+        objetivo_fuera_camino = 0.18
+    else:
+        objetivo_fuera_camino = 0.24
+
+    cantidad_bifurcaciones = sum(1 for vecinos in adyacencias.values() if len(vecinos) == 3)
+    proporcion_bifurcaciones = cantidad_bifurcaciones / cantidad_habitaciones
+    minimo_bifurcaciones = 0.0 if cantidad_habitaciones < 10 else 0.05
+    penalizacion_camino = penalizacion_faltante_normalizada(proporcion_fuera_camino, objetivo_fuera_camino)
+    penalizacion_bifurcaciones = penalizacion_rango(proporcion_bifurcaciones, minimo_bifurcaciones, 0.28)
+    return (penalizacion_camino + penalizacion_bifurcaciones) / 2.0
+
+
+def penalizacion_lineas_excesivas(habitaciones: dict[str, dict]) -> float:
+    resumen = resumen_cuadricula_logica(habitaciones)
+    aspecto = resumen["aspecto_caja"]
+    if aspecto <= 2.2:
+        return 0.0
+    return min(1.0, (aspecto - 2.2) / (6.0 - 2.2))
