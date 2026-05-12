@@ -10,7 +10,24 @@ from mazmorra.generacion.constantes import GRADO_MAXIMO_HABITACION, GRADO_MINIMO
 FILAS_CUADRICULA_LOGICA = 6
 COLUMNAS_CUADRICULA_LOGICA = 6
 MAXIMO_CELDAS_LOGICAS = FILAS_CUADRICULA_LOGICA * COLUMNAS_CUADRICULA_LOGICA
+
+
 def crear_mazmorra_inicial(aleatorio: random.Random, semilla: int) -> dict:
+    ultimo_error: ValueError | None = None
+
+    for _ in range(40):
+        try:
+            return crear_mazmorra_inicial_en_un_intento(aleatorio, semilla)
+        except ValueError as error:
+            ultimo_error = error
+
+    if ultimo_error is not None:
+        raise ultimo_error
+
+    raise ValueError("No se pudo construir una mazmorra inicial válida")
+
+
+def crear_mazmorra_inicial_en_un_intento(aleatorio: random.Random, semilla: int) -> dict:
     cantidad_habitaciones = aleatorio.randint(8, 20)
     cantidad_tesoros = minimos_tesoro_por_tamano(cantidad_habitaciones)
     cantidad_descanso = aleatorio.randint(0, min(2, max(0, cantidad_habitaciones - 7)))
@@ -68,7 +85,9 @@ def crear_mazmorra_inicial(aleatorio: random.Random, semilla: int) -> dict:
         posibles_padres = [
             nombre
             for nombre in habitaciones
-            if nombre != salida and grados_actuales.get(nombre, 0) < GRADO_MAXIMO_HABITACION
+            if nombre != salida
+            and grados_actuales.get(nombre, 0) > 0
+            and grados_actuales.get(nombre, 0) < GRADO_MAXIMO_HABITACION
         ]
         padre = aleatorio.choice(posibles_padres)
         rama = [restantes.pop() for _ in range(longitud_rama)]
