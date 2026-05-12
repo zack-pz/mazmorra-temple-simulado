@@ -1,0 +1,9 @@
+TIPOS_SALA_MUTABLES = ("combate", "tesoro", "descanso")
+TIPOS_SALA_COMBATE = {"combate", "tesoro", "boss"}
+
+TILE_PARED = 0
+TILE_PISO = 1
+TILE_INICIO = 2
+TILE_SALIDA = 3
+TILE_TESORO = 4
+TILE_BOSS = 5
