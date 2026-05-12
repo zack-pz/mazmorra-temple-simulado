@@ -47,6 +47,7 @@ def evaluar_mazmorra(
     boss_en_camino = boss in camino_principal if boss is not None else False
 
     penalizacion_dura_conectividad = 0.0 if distancia_salida != inf else 1.0
+    cantidad_grados_invalidos = sum(1 for vecinos in adyacencias.values() if len(vecinos) < 1 or len(vecinos) > 3)
     secuencia_valida = (
         boss is not None
         and distancia_boss != inf
@@ -55,6 +56,7 @@ def evaluar_mazmorra(
         and boss_en_camino
     )
     penalizacion_dura_secuencia_boss_salida = 0.0 if secuencia_valida else 1.0
+    penalizacion_dura_grados_habitaciones = cantidad_grados_invalidos / max(1, cantidad_habitaciones)
     penalizacion_dura_cantidad_habitaciones = penalizacion_rango(cantidad_habitaciones, 8, 20)
     penalizacion_dura_cantidad_tesoros = penalizacion_min_tesoros
     penalizacion_dura_cantidad_descanso = max(0.0, cantidad_descanso - 2) / 2.0
@@ -76,6 +78,7 @@ def evaluar_mazmorra(
     penalizaciones = {
         "conectividad_dura": penalizacion_dura_conectividad,
         "secuencia_boss_salida_dura": penalizacion_dura_secuencia_boss_salida,
+        "grados_habitaciones_dura": penalizacion_dura_grados_habitaciones,
         "cantidad_habitaciones_dura": penalizacion_dura_cantidad_habitaciones,
         "cantidad_tesoros_dura": penalizacion_dura_cantidad_tesoros,
         "cantidad_descanso_dura": penalizacion_dura_cantidad_descanso,
@@ -90,6 +93,7 @@ def evaluar_mazmorra(
     terminos_ponderados = {
         "conectividad_dura": penalizaciones["conectividad_dura"] * pesos.conectividad_dura,
         "secuencia_boss_salida_dura": penalizaciones["secuencia_boss_salida_dura"] * pesos.secuencia_boss_salida_dura,
+        "grados_habitaciones_dura": penalizaciones["grados_habitaciones_dura"] * pesos.grados_habitaciones_dura,
         "cantidad_habitaciones_dura": penalizaciones["cantidad_habitaciones_dura"] * pesos.cantidad_habitaciones_dura,
         "cantidad_tesoros_dura": penalizaciones["cantidad_tesoros_dura"] * pesos.cantidad_tesoros_dura,
         "cantidad_descanso_dura": penalizaciones["cantidad_descanso_dura"] * pesos.cantidad_descanso_dura,
@@ -108,6 +112,7 @@ def evaluar_mazmorra(
             for clave in (
                 "conectividad_dura",
                 "secuencia_boss_salida_dura",
+                "grados_habitaciones_dura",
                 "cantidad_habitaciones_dura",
                 "cantidad_tesoros_dura",
                 "cantidad_descanso_dura",
@@ -123,6 +128,7 @@ def evaluar_mazmorra(
             "distancia_boss": None if distancia_boss == inf else distancia_boss,
             "distancia_salida": None if distancia_salida == inf else distancia_salida,
             "distancia_boss_a_salida": None if distancia_boss_a_salida == inf else distancia_boss_a_salida,
+            "cantidad_grados_invalidos": cantidad_grados_invalidos,
             "tesoros_bloqueados": tesoros_bloqueados,
             "proporcion_piso": proporcion_actual_piso,
             "boss_en_camino_principal": boss_en_camino,

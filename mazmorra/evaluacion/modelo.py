@@ -35,6 +35,7 @@ class EstadoMazmorra:
 class PesosObjetivo:
     conectividad_dura: float = 1200.0
     secuencia_boss_salida_dura: float = 1000.0
+    grados_habitaciones_dura: float = 950.0
     cantidad_habitaciones_dura: float = 500.0
     cantidad_tesoros_dura: float = 700.0
     cantidad_descanso_dura: float = 450.0

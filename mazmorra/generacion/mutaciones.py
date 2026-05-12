@@ -4,7 +4,13 @@ from copy import deepcopy
 import random
 
 from mazmorra.generacion.constantes import TIPOS_SALA_COMBATE, TIPOS_SALA_MUTABLES
-from mazmorra.generacion.topologia import calcular_grados, proyectar_cuadricula_logica, recalibrar_atributos
+from mazmorra.generacion.topologia import (
+    GRADO_MAXIMO_HABITACION,
+    calcular_grados,
+    proyectar_cuadricula_logica,
+    recalibrar_atributos,
+    validar_grados_habitaciones,
+)
 
 
 def mutar_mazmorra(mazmorra: dict, aleatorio: random.Random) -> dict:
@@ -19,8 +25,15 @@ def mutar_mazmorra(mazmorra: dict, aleatorio: random.Random) -> dict:
             mutar_disposicion_logica,
         )
     )
-    operador(mutada, aleatorio)
+    try:
+        operador(mutada, aleatorio)
+    except ValueError:
+        return deepcopy(mazmorra)
     requiere_reproyeccion = operador in {mutar_conexion_hoja, mutar_disposicion_logica}
+    try:
+        validar_grados_habitaciones(mutada)
+    except ValueError:
+        return deepcopy(mazmorra)
     if requiere_reproyeccion and not proyectar_o_revertir(mutada, mazmorra, aleatorio):
         return deepcopy(mazmorra)
     recalibrar_atributos(mutada, aleatorio)
@@ -83,15 +96,16 @@ def mutar_disposicion_logica(mazmorra: dict, aleatorio: random.Random) -> None:
 
 def mutar_conexion_hoja(mazmorra: dict, aleatorio: random.Random) -> None:
     grados = calcular_grados(mazmorra["conexiones"])
-    hoja_candidata = [
+    hojas_reubicables = [
         nombre
         for nombre in mazmorra["habitaciones"]
-        if grados.get(nombre, 0) == 1 and nombre not in {mazmorra["habitacion_inicio"], mazmorra["habitacion_boss"], mazmorra["habitacion_salida"]}
+        if grados.get(nombre, 0) == 1
+        if nombre not in {mazmorra["habitacion_inicio"], mazmorra["habitacion_boss"], mazmorra["habitacion_salida"]}
     ]
-    if not hoja_candidata:
+    if not hojas_reubicables:
         return
 
-    hoja = aleatorio.choice(hoja_candidata)
+    hoja = aleatorio.choice(hojas_reubicables)
     origen_actual = next(
         origen if destino == hoja else destino
         for origen, destino in mazmorra["conexiones"]
@@ -100,7 +114,8 @@ def mutar_conexion_hoja(mazmorra: dict, aleatorio: random.Random) -> None:
     posibles_padres = [
         nombre
         for nombre in mazmorra["habitaciones"]
-        if nombre not in {hoja, origen_actual, mazmorra["habitacion_salida"]} and grados.get(nombre, 0) < 4
+        if nombre not in {hoja, origen_actual, mazmorra["habitacion_salida"]}
+        and grados.get(nombre, 0) < GRADO_MAXIMO_HABITACION
     ]
     if not posibles_padres:
         return

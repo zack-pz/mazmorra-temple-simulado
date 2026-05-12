@@ -9,6 +9,8 @@ from mazmorra.evaluacion import minimos_tesoro_por_tamano
 FILAS_CUADRICULA_LOGICA = 6
 COLUMNAS_CUADRICULA_LOGICA = 6
 MAXIMO_CELDAS_LOGICAS = FILAS_CUADRICULA_LOGICA * COLUMNAS_CUADRICULA_LOGICA
+GRADO_MINIMO_HABITACION = 1
+GRADO_MAXIMO_HABITACION = 3
 
 
 def crear_mazmorra_inicial(aleatorio: random.Random, semilla: int) -> dict:
@@ -66,7 +68,11 @@ def crear_mazmorra_inicial(aleatorio: random.Random, semilla: int) -> dict:
 
     while restantes:
         longitud_rama = min(len(restantes), aleatorio.randint(1, 3))
-        posibles_padres = [nombre for nombre in habitaciones if nombre != salida and grados_actuales.get(nombre, 0) < 4]
+        posibles_padres = [
+            nombre
+            for nombre in habitaciones
+            if nombre != salida and grados_actuales.get(nombre, 0) < GRADO_MAXIMO_HABITACION
+        ]
         padre = aleatorio.choice(posibles_padres)
         rama = [restantes.pop() for _ in range(longitud_rama)]
         conexiones.append((padre, rama[0]))
@@ -85,6 +91,7 @@ def crear_mazmorra_inicial(aleatorio: random.Random, semilla: int) -> dict:
         "habitacion_salida": salida,
         "semilla": semilla,
     }
+    validar_grados_habitaciones(mazmorra)
     proyectar_cuadricula_logica(mazmorra, aleatorio)
     recalibrar_atributos(mazmorra, aleatorio)
     return mazmorra
@@ -145,6 +152,35 @@ def calcular_grados(conexiones: list[tuple[str, str]]) -> dict[str, int]:
     return grados
 
 
+def habitaciones_con_grado_invalido(
+    habitaciones: dict[str, dict],
+    conexiones: list[tuple[str, str]],
+    grado_minimo: int = GRADO_MINIMO_HABITACION,
+    grado_maximo: int = GRADO_MAXIMO_HABITACION,
+) -> dict[str, int]:
+    grados = calcular_grados(conexiones)
+    return {
+        nombre: grados.get(nombre, 0)
+        for nombre in habitaciones
+        if grados.get(nombre, 0) < grado_minimo or grados.get(nombre, 0) > grado_maximo
+    }
+
+
+def validar_grados_habitaciones(mazmorra: dict) -> None:
+    grados_invalidos = habitaciones_con_grado_invalido(mazmorra["habitaciones"], mazmorra["conexiones"])
+    if not grados_invalidos:
+        return
+
+    detalle = ", ".join(
+        f"{nombre}={grado}" for nombre, grado in sorted(grados_invalidos.items(), key=lambda item: item[0])
+    )
+    raise ValueError(
+        "Todas las habitaciones deben tener entre "
+        f"{GRADO_MINIMO_HABITACION} y {GRADO_MAXIMO_HABITACION} conexiones. "
+        f"Inválidas: {detalle}"
+    )
+
+
 def construir_adyacencias(conexiones: list[tuple[str, str]]) -> dict[str, set[str]]:
     adyacencias: dict[str, set[str]] = defaultdict(set)
     for origen, destino in conexiones:
@@ -159,13 +195,17 @@ def proyectar_cuadricula_logica(mazmorra: dict, aleatorio: random.Random, intent
     if len(habitaciones) > MAXIMO_CELDAS_LOGICAS:
         raise ValueError("La mazmorra supera la capacidad de la cuadrícula lógica 6x6")
 
+    validar_grados_habitaciones(mazmorra)
+
     adyacencias = construir_adyacencias(mazmorra["conexiones"])
     for nombre in habitaciones:
         adyacencias.setdefault(nombre, set())
 
     grados = {nombre: len(vecinos) for nombre, vecinos in adyacencias.items()}
-    if any(grado > 4 for grado in grados.values()):
-        raise ValueError("Existe una habitación con más de 4 conexiones, imposible de proyectar ortogonalmente")
+    if any(grado > GRADO_MAXIMO_HABITACION for grado in grados.values()):
+        raise ValueError(
+            "Existe una habitación con más conexiones que las permitidas por la restricción lógica actual"
+        )
 
     inicio = mazmorra["habitacion_inicio"]
     tamanos_subarbol = calcular_tamanos_subarbol(adyacencias, inicio)
@@ -324,6 +364,7 @@ def vecinos_ortogonales(fila: int, columna: int) -> list[tuple[int, int]]:
 
 
 def validar_cuadricula_logica(mazmorra: dict) -> None:
+    validar_grados_habitaciones(mazmorra)
     ocupadas: set[tuple[int, int]] = set()
 
     for nombre, habitacion in mazmorra["habitaciones"].items():
