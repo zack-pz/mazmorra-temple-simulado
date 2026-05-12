@@ -28,6 +28,8 @@ def construir_parser() -> argparse.ArgumentParser:
 
 def imprimir_reporte(resultado) -> None:
     evaluacion = resultado.evaluacion
+    evaluacion_inicial = resultado.evaluacion_inicial
+    estadisticas_recocido = resultado.estadisticas_recocido
 
     print("=" * 60)
     print("GENERACIÓN DE MAZMORRA CON TEMPLE SIMULADO")
@@ -36,7 +38,35 @@ def imprimir_reporte(resultado) -> None:
     print(f"Iteraciones: {resultado.iteraciones}")
     print(f"Energía inicial: {resultado.energia_inicial:.2f}")
     print(f"Energía final: {resultado.energia_final:.2f}")
+    print(f"Mejora absoluta: {estadisticas_recocido.get('mejora_absoluta', 0.0):.2f}")
+    print(f"Mejora porcentual: {estadisticas_recocido.get('mejora_porcentual', 0.0):.2f}%")
     print(f"¿Es factible?: {'sí' if evaluacion['factible'] else 'no'}")
+
+    print("\nEfecto del temple simulado")
+    print(f"- vecinos_generados: {estadisticas_recocido.get('vecinos_generados', 0)}")
+    print(f"- vecinos_aceptados: {estadisticas_recocido.get('vecinos_aceptados', 0)}")
+    print(f"- vecinos_rechazados: {estadisticas_recocido.get('vecinos_rechazados', 0)}")
+    print(f"- mejoras_directas_aceptadas: {estadisticas_recocido.get('mejoras_directas_aceptadas', 0)}")
+    print(f"- empeoramientos_aceptados: {estadisticas_recocido.get('empeoramientos_aceptados', 0)}")
+    print(f"- empeoramientos_rechazados: {estadisticas_recocido.get('empeoramientos_rechazados', 0)}")
+    print(f"- tasa_aceptacion: {estadisticas_recocido.get('tasa_aceptacion', 0.0):.2%}")
+    print(f"- mejor_iteracion: {estadisticas_recocido.get('iteracion_mejor', -1)}")
+    print(f"- energia_maxima_visitada: {estadisticas_recocido.get('energia_maxima_visitada', resultado.energia_inicial):.2f}")
+
+    cambios_terminos = []
+    for nombre, valor_final in evaluacion["terminos_ponderados"].items():
+        valor_inicial = evaluacion_inicial.get("terminos_ponderados", {}).get(nombre, 0.0)
+        delta = valor_inicial - valor_final
+        if abs(delta) > 1e-9:
+            cambios_terminos.append((nombre, valor_inicial, valor_final, delta))
+
+    if cambios_terminos:
+        print("\nCambios más visibles en la energía")
+        for nombre, valor_inicial, valor_final, delta in sorted(cambios_terminos, key=lambda item: abs(item[3]), reverse=True)[:5]:
+            print(
+                f"- {nombre}: {valor_inicial:.4f} -> {valor_final:.4f} "
+                f"(delta {delta:+.4f})"
+            )
 
     print("\nMétricas")
     for nombre, valor in evaluacion["metricas"].items():

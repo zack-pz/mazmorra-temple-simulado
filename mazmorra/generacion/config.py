@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from mazmorra.evaluacion import EstadoMazmorra
 
@@ -21,3 +21,5 @@ class ResultadoGeneracion:
     iteraciones: int
     energia_inicial: float
     energia_final: float
+    evaluacion_inicial: dict = field(default_factory=dict)
+    estadisticas_recocido: dict = field(default_factory=dict)
