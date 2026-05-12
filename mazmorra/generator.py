@@ -431,13 +431,23 @@ def tallar_pasillo(grid: np.ndarray, inicio: tuple[int, int], fin: tuple[int, in
     grid[y_min : y_max + 1, x2] = TILE_PISO
 
 
-def guardar_visualizacion(estado: EstadoMazmorra, ruta_salida: str) -> None:
-    fig, axes = plt.subplots(1, 2, figsize=(16, 8), constrained_layout=True)
-    fig.suptitle(f"Mazmorra generada con temple simulado · seed={estado.semilla}", fontsize=14, weight="bold")
+def guardar_visualizaciones(estado: EstadoMazmorra, ruta_logica: str, ruta_espacial: str) -> None:
+    guardar_visualizacion_logica(estado, ruta_logica)
+    guardar_visualizacion_espacial(estado, ruta_espacial)
 
-    dibujar_grafo(axes[0], estado)
-    dibujar_grid(axes[1], estado.grid)
 
+def guardar_visualizacion_logica(estado: EstadoMazmorra, ruta_salida: str) -> None:
+    fig, ax = plt.subplots(figsize=(10, 8), constrained_layout=True)
+    fig.suptitle(f"Estructura lógica · seed={estado.semilla}", fontsize=14, weight="bold")
+    dibujar_grafo(ax, estado)
+    plt.savefig(ruta_salida, dpi=180, bbox_inches="tight")
+    plt.close(fig)
+
+
+def guardar_visualizacion_espacial(estado: EstadoMazmorra, ruta_salida: str) -> None:
+    fig, ax = plt.subplots(figsize=(10, 8), constrained_layout=True)
+    fig.suptitle(f"Mapa espacial · seed={estado.semilla}", fontsize=14, weight="bold")
+    dibujar_grid(ax, estado.grid)
     plt.savefig(ruta_salida, dpi=180, bbox_inches="tight")
     plt.close(fig)
 

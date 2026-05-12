@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import argparse
 
-from mazmorra.generator import ConfiguracionGenerador, generar_mazmorra, guardar_visualizacion
+from mazmorra.generator import ConfiguracionGenerador, generar_mazmorra, guardar_visualizaciones
 
 
 def construir_parser() -> argparse.ArgumentParser:
@@ -10,10 +10,16 @@ def construir_parser() -> argparse.ArgumentParser:
     parser.add_argument("--semilla", type=int, default=42, help="Semilla reproducible del generador")
     parser.add_argument("--iteraciones", type=int, default=600, help="Cantidad de iteraciones de temple simulado")
     parser.add_argument(
-        "--imagen",
+        "--imagen-logica",
         type=str,
-        default="mazmorra-generada.png",
-        help="Ruta donde se guarda la visualización PNG",
+        default="mazmorra-logica.png",
+        help="Ruta donde se guarda la imagen PNG de la estructura lógica",
+    )
+    parser.add_argument(
+        "--imagen-espacial",
+        type=str,
+        default="mazmorra-espacial.png",
+        help="Ruta donde se guarda la imagen PNG del mapa espacial",
     )
     return parser
 
@@ -47,9 +53,10 @@ def main() -> None:
     argumentos = construir_parser().parse_args()
     configuracion = ConfiguracionGenerador(semilla=argumentos.semilla, iteraciones=argumentos.iteraciones)
     resultado = generar_mazmorra(configuracion)
-    guardar_visualizacion(resultado.estado, argumentos.imagen)
+    guardar_visualizaciones(resultado.estado, argumentos.imagen_logica, argumentos.imagen_espacial)
     imprimir_reporte(resultado)
-    print(f"\nImagen guardada en: {argumentos.imagen}")
+    print(f"\nImagen lógica guardada en: {argumentos.imagen_logica}")
+    print(f"Imagen espacial guardada en: {argumentos.imagen_espacial}")
 
 
 if __name__ == "__main__":
