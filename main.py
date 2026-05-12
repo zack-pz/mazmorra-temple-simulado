@@ -1,21 +1,11 @@
 from __future__ import annotations
 
-import importlib.util
-from pathlib import Path
-
 from mazmorra.objective import EstadoMazmorra, evaluar_mazmorra
+from mazmorra import mazmorra_estatica
 
 
 def cargar_modulo_prototipo():
-    ruta_modulo = Path(__file__).parent / "mazmorra" / "mazmorra-estatica.py"
-    especificacion = importlib.util.spec_from_file_location("mazmorra_estatica", ruta_modulo)
-
-    if especificacion is None or especificacion.loader is None:
-        raise ImportError(f"No se pudo cargar el módulo desde {ruta_modulo}")
-
-    modulo = importlib.util.module_from_spec(especificacion)
-    especificacion.loader.exec_module(modulo)
-    return modulo
+    return mazmorra_estatica
 
 
 def construir_estado_desde_prototipo(modulo_prototipo) -> EstadoMazmorra:
