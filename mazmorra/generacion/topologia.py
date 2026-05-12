@@ -4,15 +4,12 @@ from collections import defaultdict, deque
 import random
 
 from mazmorra.evaluacion import minimos_tesoro_por_tamano
+from mazmorra.generacion.constantes import GRADO_MAXIMO_HABITACION, GRADO_MINIMO_HABITACION
 
 
 FILAS_CUADRICULA_LOGICA = 6
 COLUMNAS_CUADRICULA_LOGICA = 6
 MAXIMO_CELDAS_LOGICAS = FILAS_CUADRICULA_LOGICA * COLUMNAS_CUADRICULA_LOGICA
-GRADO_MINIMO_HABITACION = 1
-GRADO_MAXIMO_HABITACION = 3
-
-
 def crear_mazmorra_inicial(aleatorio: random.Random, semilla: int) -> dict:
     cantidad_habitaciones = aleatorio.randint(8, 20)
     cantidad_tesoros = minimos_tesoro_por_tamano(cantidad_habitaciones)

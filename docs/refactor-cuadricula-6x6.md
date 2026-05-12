@@ -51,11 +51,11 @@ Eliminar el layout basado en profundidad BFS como fuente primaria de posiciones 
 
 Medio-bajo. Simplifica el render y reduce acoplamiento.
 
-## Fase 3 — Restringir grados a 1..3
+## Fase 3 — Restringir grados a 1..4
 
 ### Meta
 
-Cada habitación debe tener entre 1 y 3 conexiones.
+Cada habitación debe tener entre 1 y 4 conexiones.
 
 ### Trabajo
 
@@ -107,7 +107,7 @@ Premiar estructuras menos lineales y mejor distribuidas.
 - La evaluación ahora considera:
   - dispersión por caja lógica y uso de ejes
   - densidad de ocupación dentro de la caja lógica
-  - proporción de habitaciones fuera del camino principal y bifurcaciones grado 3
+  - proporción de habitaciones fuera del camino principal y bifurcaciones de grado alto (3 o 4)
   - elongación excesiva de la caja lógica como proxy de linealidad
 - Se exponen métricas adicionales en el reporte para facilitar tuning posterior de pesos.
 

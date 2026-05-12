@@ -209,7 +209,7 @@ def penalizacion_ramificacion_util(
     else:
         objetivo_fuera_camino = 0.24
 
-    cantidad_bifurcaciones = sum(1 for vecinos in adyacencias.values() if len(vecinos) == 3)
+    cantidad_bifurcaciones = sum(1 for vecinos in adyacencias.values() if len(vecinos) >= 3)
     proporcion_bifurcaciones = cantidad_bifurcaciones / cantidad_habitaciones
     minimo_bifurcaciones = 0.0 if cantidad_habitaciones < 10 else 0.05
     penalizacion_camino = penalizacion_faltante_normalizada(proporcion_fuera_camino, objetivo_fuera_camino)

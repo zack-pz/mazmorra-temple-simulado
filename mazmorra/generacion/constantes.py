@@ -1,5 +1,7 @@
 TIPOS_SALA_MUTABLES = ("combate", "tesoro", "descanso")
 TIPOS_SALA_COMBATE = {"combate", "tesoro", "boss"}
+GRADO_MINIMO_HABITACION = 1
+GRADO_MAXIMO_HABITACION = 4
 
 TILE_PARED = 0
 TILE_PISO = 1

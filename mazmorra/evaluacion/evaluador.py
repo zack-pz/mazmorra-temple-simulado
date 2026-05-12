@@ -21,6 +21,9 @@ from mazmorra.evaluacion.penalizaciones import (
     resumen_cuadricula_logica,
 )
 
+GRADO_MINIMO_EVALUACION = 1
+GRADO_MAXIMO_EVALUACION = 4
+
 
 def evaluar_mazmorra(
     estado: EstadoMazmorra,
@@ -52,7 +55,11 @@ def evaluar_mazmorra(
     boss_en_camino = boss in camino_principal if boss is not None else False
 
     penalizacion_dura_conectividad = 0.0 if distancia_salida != inf else 1.0
-    cantidad_grados_invalidos = sum(1 for vecinos in adyacencias.values() if len(vecinos) < 1 or len(vecinos) > 3)
+    cantidad_grados_invalidos = sum(
+        1
+        for vecinos in adyacencias.values()
+        if len(vecinos) < GRADO_MINIMO_EVALUACION or len(vecinos) > GRADO_MAXIMO_EVALUACION
+    )
     secuencia_valida = (
         boss is not None
         and distancia_boss != inf
@@ -158,7 +165,7 @@ def evaluar_mazmorra(
             "densidad_caja_logica": resumen_cuadricula["densidad_caja"],
             "aspecto_caja_logica": resumen_cuadricula["aspecto_caja"],
             "habitaciones_fuera_camino_principal": max(0, cantidad_habitaciones - len(camino_principal)),
-            "cantidad_bifurcaciones": sum(1 for vecinos in adyacencias.values() if len(vecinos) == 3),
+            "cantidad_bifurcaciones": sum(1 for vecinos in adyacencias.values() if len(vecinos) >= 3),
             "tipos_sala": dict(tipos),
         },
         "penalizaciones": penalizaciones,
