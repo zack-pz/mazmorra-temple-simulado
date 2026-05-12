@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import argparse
 
-from mazmorra.generator import ConfiguracionGenerador, generar_mazmorra, guardar_visualizaciones
+from temple_simulado import generar_mazmorra
+from mazmorra.generacion.config import ConfiguracionGenerador
+from mazmorra.generacion.render import guardar_visualizaciones
 
 
 def construir_parser() -> argparse.ArgumentParser:
