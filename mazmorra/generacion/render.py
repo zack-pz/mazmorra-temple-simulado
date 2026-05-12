@@ -1,21 +1,25 @@
 from __future__ import annotations
 
-from collections import defaultdict
-
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.colors import ListedColormap
 
 from mazmorra.evaluacion import EstadoMazmorra
 from mazmorra.generacion.constantes import TILE_BOSS, TILE_INICIO, TILE_PARED, TILE_PISO, TILE_SALIDA, TILE_TESORO
-from mazmorra.generacion.topologia import calcular_profundidades
+from mazmorra.generacion.topologia import COLUMNAS_CUADRICULA_LOGICA, FILAS_CUADRICULA_LOGICA, validar_cuadricula_logica
+
+
+ANCHO_CELDA_RENDER = 12
+ALTO_CELDA_RENDER = 10
+MARGEN_EXTERIOR_RENDER = 3
 
 
 def materializar_estado(mazmorra: dict) -> EstadoMazmorra:
     from copy import deepcopy
 
+    validar_cuadricula_logica(mazmorra)
     habitaciones = deepcopy(mazmorra["habitaciones"])
-    asignar_layout(habitaciones, mazmorra["conexiones"], mazmorra["habitacion_inicio"])
+    asignar_layout_desde_cuadricula(habitaciones)
     grid = construir_grid(
         habitaciones,
         mazmorra["conexiones"],
@@ -39,27 +43,21 @@ def materializar_estado(mazmorra: dict) -> EstadoMazmorra:
     )
 
 
-def asignar_layout(habitaciones: dict[str, dict], conexiones: list[tuple[str, str]], inicio: str) -> None:
-    profundidades = calcular_profundidades(conexiones, inicio)
-    capas: dict[int, list[str]] = defaultdict(list)
-    for nombre in habitaciones:
-        capas[profundidades.get(nombre, 0)].append(nombre)
+def asignar_layout_desde_cuadricula(habitaciones: dict[str, dict]) -> None:
+    for habitacion in habitaciones.values():
+        fila = habitacion["fila"]
+        columna = habitacion["columna"]
+        origen_x = MARGEN_EXTERIOR_RENDER + columna * ANCHO_CELDA_RENDER
+        origen_y = MARGEN_EXTERIOR_RENDER + fila * ALTO_CELDA_RENDER
+        offset_x = max(1, (ANCHO_CELDA_RENDER - habitacion["w"]) // 2)
+        offset_y = max(1, (ALTO_CELDA_RENDER - habitacion["h"]) // 2)
 
-    distancia_x = 12
-    padding_y = 3
-
-    for profundidad in sorted(capas):
-        nombres = sorted(capas[profundidad])
-        cursor_y = 2
-        for nombre in nombres:
-            habitacion = habitaciones[nombre]
-            habitacion["x"] = 2 + profundidad * distancia_x
-            habitacion["y"] = cursor_y
-            habitacion["center"] = (
-                habitacion["x"] + habitacion["w"] // 2,
-                habitacion["y"] + habitacion["h"] // 2,
-            )
-            cursor_y += habitacion["h"] + padding_y
+        habitacion["x"] = origen_x + offset_x
+        habitacion["y"] = origen_y + offset_y
+        habitacion["center"] = (
+            habitacion["x"] + habitacion["w"] // 2,
+            habitacion["y"] + habitacion["h"] // 2,
+        )
 
 
 def construir_grid(
@@ -69,8 +67,8 @@ def construir_grid(
     habitacion_boss: str,
     habitacion_salida: str,
 ) -> np.ndarray:
-    ancho = max(habitacion["x"] + habitacion["w"] for habitacion in habitaciones.values()) + 3
-    alto = max(habitacion["y"] + habitacion["h"] for habitacion in habitaciones.values()) + 3
+    ancho = MARGEN_EXTERIOR_RENDER * 2 + COLUMNAS_CUADRICULA_LOGICA * ANCHO_CELDA_RENDER
+    alto = MARGEN_EXTERIOR_RENDER * 2 + FILAS_CUADRICULA_LOGICA * ALTO_CELDA_RENDER
     grid = np.full((alto, ancho), TILE_PARED, dtype=int)
 
     for nombre, habitacion in habitaciones.items():
@@ -135,6 +133,8 @@ def dibujar_grafo(ax, estado: EstadoMazmorra) -> None:
     }
 
     ax.set_title("Estructura lógica generada")
+    ax.set_xticks(np.arange(MARGEN_EXTERIOR_RENDER, MARGEN_EXTERIOR_RENDER + COLUMNAS_CUADRICULA_LOGICA * ANCHO_CELDA_RENDER + 1, ANCHO_CELDA_RENDER))
+    ax.set_yticks(np.arange(MARGEN_EXTERIOR_RENDER, MARGEN_EXTERIOR_RENDER + FILAS_CUADRICULA_LOGICA * ALTO_CELDA_RENDER + 1, ALTO_CELDA_RENDER))
 
     for origen, destino in estado.conexiones:
         x1, y1 = estado.habitaciones[origen]["center"]
@@ -149,7 +149,7 @@ def dibujar_grafo(ax, estado: EstadoMazmorra) -> None:
 
     ax.set_aspect("equal")
     ax.invert_yaxis()
-    ax.grid(alpha=0.2)
+    ax.grid(alpha=0.3)
 
 
 def dibujar_grid(ax, grid: np.ndarray | None) -> None:

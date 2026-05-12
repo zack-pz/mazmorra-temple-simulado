@@ -4,7 +4,7 @@ from copy import deepcopy
 import random
 
 from mazmorra.generacion.constantes import TIPOS_SALA_COMBATE, TIPOS_SALA_MUTABLES
-from mazmorra.generacion.topologia import calcular_grados, recalibrar_atributos
+from mazmorra.generacion.topologia import calcular_grados, proyectar_cuadricula_logica, recalibrar_atributos
 
 
 def mutar_mazmorra(mazmorra: dict, aleatorio: random.Random) -> dict:
@@ -16,9 +16,13 @@ def mutar_mazmorra(mazmorra: dict, aleatorio: random.Random) -> dict:
             mutar_cofres,
             mutar_conexion_hoja,
             mutar_tamano_sala,
+            mutar_disposicion_logica,
         )
     )
     operador(mutada, aleatorio)
+    requiere_reproyeccion = operador in {mutar_conexion_hoja, mutar_disposicion_logica}
+    if requiere_reproyeccion and not proyectar_o_revertir(mutada, mazmorra, aleatorio):
+        return deepcopy(mazmorra)
     recalibrar_atributos(mutada, aleatorio)
     return mutada
 
@@ -73,6 +77,10 @@ def mutar_tamano_sala(mazmorra: dict, aleatorio: random.Random) -> None:
     habitacion["h"] = min(7, max(4, habitacion["h"] + aleatorio.choice((-1, 1))))
 
 
+def mutar_disposicion_logica(mazmorra: dict, aleatorio: random.Random) -> None:
+    del mazmorra, aleatorio
+
+
 def mutar_conexion_hoja(mazmorra: dict, aleatorio: random.Random) -> None:
     grados = calcular_grados(mazmorra["conexiones"])
     hoja_candidata = [
@@ -92,7 +100,7 @@ def mutar_conexion_hoja(mazmorra: dict, aleatorio: random.Random) -> None:
     posibles_padres = [
         nombre
         for nombre in mazmorra["habitaciones"]
-        if nombre not in {hoja, origen_actual, mazmorra["habitacion_salida"]}
+        if nombre not in {hoja, origen_actual, mazmorra["habitacion_salida"]} and grados.get(nombre, 0) < 4
     ]
     if not posibles_padres:
         return
@@ -106,3 +114,13 @@ def mutar_conexion_hoja(mazmorra: dict, aleatorio: random.Random) -> None:
     nuevas_conexiones = [conexion for conexion in mazmorra["conexiones"] if hoja not in conexion]
     nuevas_conexiones.append((hoja, nuevo_padre))
     mazmorra["conexiones"] = nuevas_conexiones
+
+
+def proyectar_o_revertir(mutada: dict, original: dict, aleatorio: random.Random) -> bool:
+    try:
+        proyectar_cuadricula_logica(mutada, aleatorio)
+        return True
+    except ValueError:
+        mutada.clear()
+        mutada.update(deepcopy(original))
+        return False
