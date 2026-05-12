@@ -27,6 +27,7 @@ def mutar_mazmorra(mazmorra: dict, aleatorio: random.Random) -> dict:
             mutar_enemigos,
             mutar_cofres,
             mutar_conexion_hoja,
+            mutar_romper_corredor_largo,
             mutar_reconectar_vecindad_ortogonal,
             mutar_relocalizar_subrama,
             mutar_tamano_sala,
@@ -203,6 +204,55 @@ def mutar_reconectar_vecindad_ortogonal(mazmorra: dict, aleatorio: random.Random
                 return
             except ValueError:
                 mazmorra["conexiones"] = restaurar_conexion_hoja(nuevas_conexiones, hoja, origen_actual)
+
+
+def mutar_romper_corredor_largo(mazmorra: dict, aleatorio: random.Random) -> None:
+    grados = calcular_grados(mazmorra["conexiones"])
+    ocupacion = construir_ocupacion_habitaciones(mazmorra)
+    hojas_reubicables = [
+        nombre
+        for nombre in mazmorra["habitaciones"]
+        if grados.get(nombre, 0) == 1
+        and nombre not in {mazmorra["habitacion_inicio"], mazmorra["habitacion_boss"], mazmorra["habitacion_salida"]}
+    ]
+    candidatos_corredor = obtener_nodos_corredor_largo(mazmorra, grados)
+
+    if not hojas_reubicables or not candidatos_corredor:
+        raise ValueError("No hay hojas o corredores largos para romper")
+
+    aleatorio.shuffle(hojas_reubicables)
+    aleatorio.shuffle(candidatos_corredor)
+
+    for objetivo in candidatos_corredor:
+        celdas_libres = celdas_libres_adyacentes_a_habitacion(mazmorra, ocupacion, objetivo)
+        if not celdas_libres:
+            continue
+
+        for hoja in hojas_reubicables:
+            origen_actual = obtener_vecino_unico(mazmorra, hoja)
+            if hoja == objetivo or origen_actual == objetivo:
+                continue
+
+            nueva_conexion = tuple(sorted((hoja, objetivo)))
+            conexiones_existentes = {tuple(sorted(conexion)) for conexion in mazmorra["conexiones"]}
+            if nueva_conexion in conexiones_existentes:
+                continue
+
+            celda_original = obtener_celda_habitacion(mazmorra, hoja)
+            nueva_celda = aleatorio.choice(celdas_libres)
+            actualizar_celda_habitacion(mazmorra, hoja, nueva_celda)
+            nuevas_conexiones = [conexion for conexion in mazmorra["conexiones"] if hoja not in conexion]
+            nuevas_conexiones.append((hoja, objetivo))
+            mazmorra["conexiones"] = nuevas_conexiones
+
+            try:
+                validar_cuadricula_logica(mazmorra)
+                return
+            except ValueError:
+                actualizar_celda_habitacion(mazmorra, hoja, celda_original)
+                mazmorra["conexiones"] = restaurar_conexion_hoja(nuevas_conexiones, hoja, origen_actual)
+
+    raise ValueError("No se pudo romper ningún corredor largo")
 
 
 def mutar_relocalizar_subrama(mazmorra: dict, aleatorio: random.Random) -> None:
@@ -405,30 +455,30 @@ def obtener_nodos_subrama(
 
     return nodos
 
-    hoja = aleatorio.choice(hojas_reubicables)
-    origen_actual = next(
-        origen if destino == hoja else destino
-        for origen, destino in mazmorra["conexiones"]
-        if origen == hoja or destino == hoja
-    )
-    posibles_padres = [
+
+def obtener_nodos_corredor_largo(mazmorra: dict, grados: dict[str, int]) -> list[str]:
+    adyacencias = construir_adyacencias(mazmorra["conexiones"])
+    nodos_candidatos: set[str] = set()
+
+    for nombre, grado in grados.items():
+        if grado != 2:
+            continue
+
+        vecinos = list(adyacencias[nombre])
+        if len(vecinos) != 2:
+            continue
+
+        for vecino in vecinos:
+            if grados.get(vecino, 0) == 2:
+                nodos_candidatos.add(nombre)
+                break
+
+    return [
         nombre
-        for nombre in mazmorra["habitaciones"]
-        if nombre not in {hoja, origen_actual, mazmorra["habitacion_salida"]}
+        for nombre in nodos_candidatos
+        if nombre not in {mazmorra["habitacion_inicio"], mazmorra["habitacion_boss"], mazmorra["habitacion_salida"]}
         and grados.get(nombre, 0) < GRADO_MAXIMO_HABITACION
     ]
-    if not posibles_padres:
-        return
-
-    nuevo_padre = aleatorio.choice(posibles_padres)
-    nueva_conexion = tuple(sorted((hoja, nuevo_padre)))
-    conexiones_existentes = {tuple(sorted(conexion)) for conexion in mazmorra["conexiones"]}
-    if nueva_conexion in conexiones_existentes:
-        return
-
-    nuevas_conexiones = [conexion for conexion in mazmorra["conexiones"] if hoja not in conexion]
-    nuevas_conexiones.append((hoja, nuevo_padre))
-    mazmorra["conexiones"] = nuevas_conexiones
 
 
 def proyectar_o_revertir(mutada: dict, original: dict, aleatorio: random.Random) -> bool:

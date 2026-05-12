@@ -9,6 +9,7 @@ from mazmorra.evaluacion.penalizaciones import (
     minimos_tesoro_por_tamano,
     obtener_boss,
     penalizacion_dispersion_cuadricula,
+    penalizacion_exceso_grado_dos,
     penalizacion_faltante_normalizada,
     penalizacion_interes_tesoros,
     penalizacion_lineas_excesivas,
@@ -89,6 +90,7 @@ def evaluar_mazmorra(
     penalizacion_suave_dispersion_cuadricula = penalizacion_dispersion_cuadricula(estado.habitaciones)
     penalizacion_suave_ocupacion_cuadricula = penalizacion_ocupacion_cuadricula(estado.habitaciones)
     penalizacion_suave_ramificacion_util = penalizacion_ramificacion_util(adyacencias, camino_principal)
+    penalizacion_suave_grado_dos = penalizacion_exceso_grado_dos(adyacencias)
     penalizacion_suave_lineas_excesivas = penalizacion_lineas_excesivas(estado.habitaciones)
     resumen_cuadricula = resumen_cuadricula_logica(estado.habitaciones)
 
@@ -108,6 +110,7 @@ def evaluar_mazmorra(
         "dispersion_cuadricula_suave": penalizacion_suave_dispersion_cuadricula,
         "ocupacion_cuadricula_suave": penalizacion_suave_ocupacion_cuadricula,
         "ramificacion_util_suave": penalizacion_suave_ramificacion_util,
+        "grado_dos_suave": penalizacion_suave_grado_dos,
         "lineas_excesivas_suave": penalizacion_suave_lineas_excesivas,
     }
 
@@ -127,6 +130,7 @@ def evaluar_mazmorra(
         "dispersion_cuadricula_suave": penalizaciones["dispersion_cuadricula_suave"] * pesos.dispersion_cuadricula_suave,
         "ocupacion_cuadricula_suave": penalizaciones["ocupacion_cuadricula_suave"] * pesos.ocupacion_cuadricula_suave,
         "ramificacion_util_suave": penalizaciones["ramificacion_util_suave"] * pesos.ramificacion_util_suave,
+        "grado_dos_suave": penalizaciones["grado_dos_suave"] * pesos.grado_dos_suave,
         "lineas_excesivas_suave": penalizaciones["lineas_excesivas_suave"] * pesos.lineas_excesivas_suave,
     }
 
@@ -166,6 +170,9 @@ def evaluar_mazmorra(
             "aspecto_caja_logica": resumen_cuadricula["aspecto_caja"],
             "habitaciones_fuera_camino_principal": max(0, cantidad_habitaciones - len(camino_principal)),
             "cantidad_bifurcaciones": sum(1 for vecinos in adyacencias.values() if len(vecinos) >= 3),
+            "cantidad_grado_dos": sum(1 for vecinos in adyacencias.values() if len(vecinos) == 2),
+            "proporcion_grado_dos": sum(1 for vecinos in adyacencias.values() if len(vecinos) == 2)
+            / max(1, cantidad_habitaciones),
             "tipos_sala": dict(tipos),
         },
         "penalizaciones": penalizaciones,

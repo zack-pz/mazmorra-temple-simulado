@@ -67,7 +67,12 @@ def crear_mazmorra_inicial_en_un_intento(aleatorio: random.Random, semilla: int)
     salas_intermedias += [crear_habitacion("descanso") for _ in range(cantidad_descanso)]
     aleatorio.shuffle(salas_intermedias)
 
-    cantidad_camino_principal = min(len(salas_intermedias), aleatorio.randint(3, max(3, len(salas_intermedias))))
+    minimo_camino_principal = min(len(salas_intermedias), 2)
+    maximo_camino_principal = min(
+        len(salas_intermedias),
+        max(minimo_camino_principal, len(salas_intermedias) // 2),
+    )
+    cantidad_camino_principal = aleatorio.randint(minimo_camino_principal, maximo_camino_principal)
     camino_principal = [inicio, *salas_intermedias[:cantidad_camino_principal], boss, salida]
 
     conexiones: list[tuple[str, str]] = []
@@ -81,15 +86,9 @@ def crear_mazmorra_inicial_en_un_intento(aleatorio: random.Random, semilla: int)
         grados_actuales[destino] += 1
 
     while restantes:
-        longitud_rama = min(len(restantes), aleatorio.randint(1, 3))
-        posibles_padres = [
-            nombre
-            for nombre in habitaciones
-            if nombre != salida
-            and grados_actuales.get(nombre, 0) > 0
-            and grados_actuales.get(nombre, 0) < GRADO_MAXIMO_HABITACION
-        ]
-        padre = aleatorio.choice(posibles_padres)
+        longitud_rama = elegir_longitud_rama_inicial(restantes, grados_actuales, aleatorio)
+        posibles_padres = obtener_posibles_padres_rama(habitaciones, grados_actuales, salida)
+        padre = elegir_padre_rama(posibles_padres, grados_actuales, aleatorio)
         rama = [restantes.pop() for _ in range(longitud_rama)]
         conexiones.append((padre, rama[0]))
         grados_actuales[padre] += 1
@@ -111,6 +110,52 @@ def crear_mazmorra_inicial_en_un_intento(aleatorio: random.Random, semilla: int)
     proyectar_cuadricula_logica(mazmorra, aleatorio)
     recalibrar_atributos(mazmorra, aleatorio)
     return mazmorra
+
+
+def elegir_longitud_rama_inicial(
+    restantes: list[str],
+    grados_actuales: dict[str, int],
+    aleatorio: random.Random,
+) -> int:
+    del grados_actuales
+    if len(restantes) <= 2:
+        return 1
+    if len(restantes) <= 4:
+        return min(len(restantes), aleatorio.choice((1, 1, 2)))
+    return min(len(restantes), aleatorio.choice((1, 1, 2, 2, 3)))
+
+
+def obtener_posibles_padres_rama(
+    habitaciones: dict[str, dict],
+    grados_actuales: dict[str, int],
+    salida: str,
+) -> list[str]:
+    return [
+        nombre
+        for nombre in habitaciones
+        if nombre != salida
+        and grados_actuales.get(nombre, 0) > 0
+        and grados_actuales.get(nombre, 0) < GRADO_MAXIMO_HABITACION
+    ]
+
+
+def elegir_padre_rama(
+    posibles_padres: list[str],
+    grados_actuales: dict[str, int],
+    aleatorio: random.Random,
+) -> str:
+    ponderados: list[str] = []
+    for nombre in posibles_padres:
+        grado = grados_actuales.get(nombre, 0)
+        repeticiones = 1
+        if grado == 1:
+            repeticiones = 5
+        elif grado == 2:
+            repeticiones = 3
+        elif grado == 3:
+            repeticiones = 2
+        ponderados.extend([nombre] * repeticiones)
+    return aleatorio.choice(ponderados)
 
 
 def recalibrar_atributos(mazmorra: dict, aleatorio: random.Random) -> None:

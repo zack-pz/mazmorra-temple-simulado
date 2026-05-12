@@ -217,6 +217,16 @@ def penalizacion_ramificacion_util(
     return (penalizacion_camino + penalizacion_bifurcaciones) / 2.0
 
 
+def penalizacion_exceso_grado_dos(adyacencias: dict[str, set[str]]) -> float:
+    cantidad_habitaciones = len(adyacencias)
+    if cantidad_habitaciones <= 2:
+        return 0.0
+
+    cantidad_grado_dos = sum(1 for vecinos in adyacencias.values() if len(vecinos) == 2)
+    proporcion_grado_dos = cantidad_grado_dos / cantidad_habitaciones
+    return penalizacion_rango(proporcion_grado_dos, 0.0, 0.4)
+
+
 def penalizacion_lineas_excesivas(habitaciones: dict[str, dict]) -> float:
     resumen = resumen_cuadricula_logica(habitaciones)
     aspecto = resumen["aspecto_caja"]
