@@ -1,0 +1,4 @@
+.venv
+.opencode
+docs
+__pycache__
