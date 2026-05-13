@@ -21,7 +21,7 @@ def distancias_bfs(adyacencias: dict[str, set[str]], inicio: str) -> dict[str, i
 
     while cola:
         actual = cola.popleft()
-        for vecino in adyacencias[actual]:
+        for vecino in vecinos_habitacion_ordenados(adyacencias, actual):
             if vecino in distancias:
                 continue
             distancias[vecino] = distancias[actual] + 1
@@ -41,7 +41,7 @@ def camino_mas_corto(adyacencias: dict[str, set[str]], inicio: str, meta: str) -
 
     while cola:
         actual = cola.popleft()
-        for vecino in adyacencias[actual]:
+        for vecino in vecinos_habitacion_ordenados(adyacencias, actual):
             if vecino in padres:
                 continue
             padres[vecino] = actual
@@ -64,3 +64,7 @@ def tipo_habitacion(habitacion: dict) -> str:
 
 def contar_tipos(habitaciones: dict[str, dict]) -> Counter:
     return Counter(tipo_habitacion(habitacion) for habitacion in habitaciones.values())
+
+
+def vecinos_habitacion_ordenados(adyacencias: dict[str, set[str]], nombre: str) -> list[str]:
+    return sorted(adyacencias.get(nombre, ()))

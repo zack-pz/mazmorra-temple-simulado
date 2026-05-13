@@ -196,7 +196,7 @@ def calcular_profundidades(conexiones: list[tuple[str, str]], inicio: str) -> di
 
     while cola:
         actual = cola.popleft()
-        for vecino in adyacencias[actual]:
+        for vecino in vecinos_habitacion_ordenados(adyacencias, actual):
             if vecino in profundidades:
                 continue
             profundidades[vecino] = profundidades[actual] + 1
@@ -303,7 +303,7 @@ def calcular_tamanos_subarbol(adyacencias: dict[str, set[str]], raiz: str) -> di
 
     def visitar(actual: str, padre: str | None) -> int:
         total = 1
-        for vecino in adyacencias[actual]:
+        for vecino in vecinos_habitacion_ordenados(adyacencias, actual):
             if vecino == padre:
                 continue
             total += visitar(vecino, actual)
@@ -325,8 +325,10 @@ def intentar_proyectar_subarbol(
     celdas_restringidas: set[tuple[int, int]] | None = None,
 ) -> bool:
     celdas_restringidas = celdas_restringidas or set()
-    hijos = [vecino for vecino in adyacencias[actual] if vecino != padre]
-    hijos.sort(key=lambda nombre: tamanos_subarbol.get(nombre, 1), reverse=True)
+    hijos = sorted(
+        (vecino for vecino in adyacencias[actual] if vecino != padre),
+        key=lambda nombre: (-tamanos_subarbol.get(nombre, 1), nombre),
+    )
 
     if not hijos:
         return True
@@ -422,6 +424,10 @@ def vecinos_ortogonales(fila: int, columna: int) -> list[tuple[int, int]]:
         for fila_candidata, columna_candidata in candidatos
         if 0 <= fila_candidata < FILAS_CUADRICULA_LOGICA and 0 <= columna_candidata < COLUMNAS_CUADRICULA_LOGICA
     ]
+
+
+def vecinos_habitacion_ordenados(adyacencias: dict[str, set[str]], nombre: str) -> list[str]:
+    return sorted(adyacencias.get(nombre, ()))
 
 
 def validar_cuadricula_logica(mazmorra: dict) -> None:

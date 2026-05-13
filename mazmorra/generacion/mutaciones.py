@@ -402,7 +402,7 @@ def camino_entre_habitaciones(
         actual = cola.popleft()
         if actual == destino:
             break
-        for vecino in adyacencias[actual]:
+        for vecino in vecinos_habitacion_ordenados(adyacencias, actual):
             if vecino in padres:
                 continue
             padres[vecino] = actual
@@ -427,7 +427,7 @@ def construir_padres_desde_inicio(adyacencias: dict[str, set[str]], inicio: str)
 
     while cola:
         actual = cola.popleft()
-        for vecino in adyacencias[actual]:
+        for vecino in vecinos_habitacion_ordenados(adyacencias, actual):
             if vecino in visitados:
                 continue
             visitados.add(vecino)
@@ -447,7 +447,7 @@ def obtener_nodos_subrama(
 
     while pila:
         actual = pila.pop()
-        for vecino in adyacencias[actual]:
+        for vecino in reversed(vecinos_habitacion_ordenados(adyacencias, actual)):
             if vecino == padre or vecino in nodos:
                 continue
             nodos.add(vecino)
@@ -460,11 +460,12 @@ def obtener_nodos_corredor_largo(mazmorra: dict, grados: dict[str, int]) -> list
     adyacencias = construir_adyacencias(mazmorra["conexiones"])
     nodos_candidatos: set[str] = set()
 
-    for nombre, grado in grados.items():
+    for nombre in sorted(grados):
+        grado = grados[nombre]
         if grado != 2:
             continue
 
-        vecinos = list(adyacencias[nombre])
+        vecinos = vecinos_habitacion_ordenados(adyacencias, nombre)
         if len(vecinos) != 2:
             continue
 
@@ -473,12 +474,16 @@ def obtener_nodos_corredor_largo(mazmorra: dict, grados: dict[str, int]) -> list
                 nodos_candidatos.add(nombre)
                 break
 
-    return [
+    return sorted(
         nombre
         for nombre in nodos_candidatos
         if nombre not in {mazmorra["habitacion_inicio"], mazmorra["habitacion_boss"], mazmorra["habitacion_salida"]}
         and grados.get(nombre, 0) < GRADO_MAXIMO_HABITACION
-    ]
+    )
+
+
+def vecinos_habitacion_ordenados(adyacencias: dict[str, set[str]], nombre: str) -> list[str]:
+    return sorted(adyacencias.get(nombre, ()))
 
 
 def proyectar_o_revertir(mutada: dict, original: dict, aleatorio: random.Random) -> bool:
