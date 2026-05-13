@@ -9,7 +9,7 @@ from mazmorra.generacion.render import guardar_visualizaciones
 
 def construir_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Generador de mazmorras con temple simulado")
-    parser.add_argument("--semilla", type=int, default=42, help="Semilla reproducible del generador")
+    parser.add_argument("--semilla", type=int, default=10, help="Semilla reproducible del generador")
     parser.add_argument("--iteraciones", type=int, default=600, help="Cantidad de iteraciones de temple simulado")
     parser.add_argument(
         "--imagen-logica",
@@ -68,17 +68,17 @@ def imprimir_reporte(resultado) -> None:
                 f"(delta {delta:+.4f})"
             )
 
-    print("\nMétricas")
-    for nombre, valor in evaluacion["metricas"].items():
-        print(f"- {nombre}: {valor}")
+    # print("\nMétricas")
+    # for nombre, valor in evaluacion["metricas"].items():
+    #     print(f"- {nombre}: {valor}")
 
-    print("\nPenalizaciones")
-    for nombre, valor in evaluacion["penalizaciones"].items():
-        print(f"- {nombre}: {valor:.4f}")
+    # print("\nPenalizaciones")
+    # for nombre, valor in evaluacion["penalizaciones"].items():
+    #     print(f"- {nombre}: {valor:.4f}")
 
-    print("\nTérminos ponderados")
-    for nombre, valor in evaluacion["terminos_ponderados"].items():
-        print(f"- {nombre}: {valor:.4f}")
+    # print("\nTérminos ponderados")
+    # for nombre, valor in evaluacion["terminos_ponderados"].items():
+    #     print(f"- {nombre}: {valor:.4f}")
 
 
 def main() -> None:

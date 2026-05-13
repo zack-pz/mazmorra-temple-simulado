@@ -7,10 +7,10 @@ from mazmorra.evaluacion import EstadoMazmorra
 
 @dataclass
 class ConfiguracionGenerador:
-    semilla: int = 42
+    semilla: int = 10
     iteraciones: int = 600
-    temperatura_inicial: float = 18.0
-    temperatura_final: float = 0.15
+    temperatura_inicial: float = 8.0
+    temperatura_final: float = 0.06
 
 
 @dataclass
