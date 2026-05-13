@@ -3,6 +3,7 @@ from __future__ import annotations
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.colors import ListedColormap
+from matplotlib.patches import Patch, Rectangle
 
 from mazmorra.evaluacion import EstadoMazmorra
 from mazmorra.generacion.constantes import TILE_BOSS, TILE_INICIO, TILE_PARED, TILE_PISO, TILE_SALIDA, TILE_TESORO
@@ -71,18 +72,8 @@ def construir_grid(
     alto = MARGEN_EXTERIOR_RENDER * 2 + FILAS_CUADRICULA_LOGICA * ALTO_CELDA_RENDER
     grid = np.full((alto, ancho), TILE_PARED, dtype=int)
 
-    for nombre, habitacion in habitaciones.items():
+    for _, habitacion in habitaciones.items():
         grid[habitacion["y"] : habitacion["y"] + habitacion["h"], habitacion["x"] : habitacion["x"] + habitacion["w"]] = TILE_PISO
-
-        centro_x, centro_y = habitacion["center"]
-        if nombre == habitacion_inicio:
-            grid[centro_y, centro_x] = TILE_INICIO
-        elif nombre == habitacion_boss:
-            grid[centro_y, centro_x] = TILE_BOSS
-        elif nombre == habitacion_salida:
-            grid[centro_y, centro_x] = TILE_SALIDA
-        elif habitacion["tipo"] == "tesoro":
-            grid[centro_y, centro_x] = TILE_TESORO
 
     for origen, destino in conexiones:
         tallar_pasillo(grid, habitaciones[origen]["center"], habitaciones[destino]["center"])
@@ -118,6 +109,8 @@ def guardar_visualizacion_espacial(estado: EstadoMazmorra, ruta_salida: str) -> 
     fig, ax = plt.subplots(figsize=(10, 8), constrained_layout=True)
     fig.suptitle(f"Mapa espacial · seed={estado.semilla}", fontsize=14, weight="bold")
     dibujar_grid(ax, estado.grid)
+    dibujar_marcadores_contenido(ax, estado)
+    dibujar_leyenda_contenido(ax)
     plt.savefig(ruta_salida, dpi=180, bbox_inches="tight")
     plt.close(fig)
 
@@ -172,3 +165,127 @@ def dibujar_grid(ax, grid: np.ndarray | None) -> None:
     ax.set_yticks(np.arange(-0.5, grid.shape[0], 1), minor=True)
     ax.grid(which="minor", color="#cbd5e1", linewidth=0.35)
     ax.tick_params(left=False, bottom=False, labelleft=False, labelbottom=False)
+
+
+def dibujar_marcadores_contenido(ax, estado: EstadoMazmorra) -> None:
+    for nombre, habitacion in estado.habitaciones.items():
+        marcadores = construir_marcadores_habitacion(nombre, habitacion, estado)
+        if not marcadores:
+            continue
+
+        slots = calcular_slots_marcadores(habitacion)
+        if not slots:
+            continue
+
+        marcadores_visibles = compactar_marcadores_si_hace_falta(marcadores, len(slots))
+
+        for marcador, (x, y) in zip(marcadores_visibles, slots):
+            dibujar_marcador(ax, x, y, marcador)
+
+
+def construir_marcadores_habitacion(nombre: str, habitacion: dict, estado: EstadoMazmorra) -> list[dict[str, str | int]]:
+    marcadores: list[dict[str, str | int]] = []
+
+    if nombre == estado.habitacion_inicio:
+        marcadores.append(crear_marcador("inicio", "#22c55e"))
+    if nombre == estado.habitacion_boss:
+        marcadores.append(crear_marcador("boss", "#7c3aed"))
+    if nombre == estado.habitacion_salida:
+        marcadores.append(crear_marcador("salida", "#14b8a6"))
+    if habitacion["tipo"] == "descanso":
+        marcadores.append(crear_marcador("descanso", "#60a5fa"))
+
+    for _ in range(habitacion.get("cofres", 0)):
+        marcadores.append(crear_marcador("cofre", "#f59e0b"))
+
+    for _ in range(habitacion.get("enemigos", 0)):
+        marcadores.append(crear_marcador("enemigo", "#ef4444"))
+
+    return marcadores
+
+
+def crear_marcador(tipo: str, color: str, texto: str = "") -> dict[str, str | int]:
+    return {
+        "tipo": tipo,
+        "color": color,
+        "texto": texto,
+    }
+
+
+def calcular_slots_marcadores(habitacion: dict) -> list[tuple[float, float]]:
+    x_inicio = habitacion["x"] + 1
+    x_fin = habitacion["x"] + habitacion["w"] - 2
+    y_inicio = habitacion["y"] + 1
+    y_fin = habitacion["y"] + habitacion["h"] - 2
+
+    if x_inicio > x_fin or y_inicio > y_fin:
+        centro_x, centro_y = habitacion["center"]
+        return [(float(centro_x), float(centro_y))]
+
+    slots = [(float(x), float(y)) for y in range(y_inicio, y_fin + 1) for x in range(x_inicio, x_fin + 1)]
+    centro_x, centro_y = habitacion["center"]
+    slots.sort(key=lambda slot: (abs(slot[0] - centro_x) + abs(slot[1] - centro_y), slot[1], slot[0]))
+    return slots
+
+
+def compactar_marcadores_si_hace_falta(marcadores: list[dict[str, str | int]], capacidad: int) -> list[dict[str, str | int]]:
+    if len(marcadores) <= capacidad:
+        return marcadores
+
+    conteos: dict[str, int] = {}
+    colores: dict[str, str] = {}
+    orden_tipos: list[str] = []
+
+    for marcador in marcadores:
+        tipo = str(marcador["tipo"])
+        if tipo not in conteos:
+            conteos[tipo] = 0
+            colores[tipo] = str(marcador["color"])
+            orden_tipos.append(tipo)
+        conteos[tipo] += 1
+
+    compactados: list[dict[str, str | int]] = []
+    for tipo in orden_tipos:
+        cantidad = conteos[tipo]
+        texto = "" if cantidad == 1 else str(cantidad)
+        compactados.append(crear_marcador(tipo, colores[tipo], texto=texto))
+
+    if len(compactados) <= capacidad:
+        return compactados
+
+    visibles = compactados[: max(1, capacidad - 1)]
+    ocultos = len(compactados) - len(visibles)
+    visibles.append(crear_marcador("extra", "#94a3b8", texto=f"+{ocultos}"))
+    return visibles[:capacidad]
+
+
+def dibujar_marcador(ax, x: float, y: float, marcador: dict[str, str | int]) -> None:
+    lado = 0.72
+    esquina_x = x - lado / 2
+    esquina_y = y - lado / 2
+    rectangulo = Rectangle(
+        (esquina_x, esquina_y),
+        lado,
+        lado,
+        facecolor=str(marcador["color"]),
+        edgecolor="#0f172a",
+        linewidth=0.6,
+        zorder=4,
+    )
+    ax.add_patch(rectangulo)
+
+    texto = str(marcador.get("texto", ""))
+    if texto:
+        ax.text(x, y, texto, ha="center", va="center", fontsize=5.5, color="#f8fafc", weight="bold", zorder=5)
+
+
+def dibujar_leyenda_contenido(ax) -> None:
+    leyenda = [
+        Patch(facecolor="#22c55e", edgecolor="#0f172a", label="Inicio"),
+        Patch(facecolor="#14b8a6", edgecolor="#0f172a", label="Salida"),
+        Patch(facecolor="#7c3aed", edgecolor="#0f172a", label="Boss"),
+        Patch(facecolor="#60a5fa", edgecolor="#0f172a", label="Descanso"),
+        Patch(facecolor="#f59e0b", edgecolor="#0f172a", label="Cofre"),
+        Patch(facecolor="#ef4444", edgecolor="#0f172a", label="Enemigo"),
+    ]
+    ax.legend(handles=leyenda, loc="upper left", bbox_to_anchor=(1.02, 1.0), frameon=True, title="Contenido")
