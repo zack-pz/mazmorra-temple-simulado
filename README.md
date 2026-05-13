@@ -1,60 +1,83 @@
-# Prototipo estático de mazmorra híbrida
+# Generador de mazmorras con temple simulado
 
-Este directorio contiene un prototipo inicial para un **generador de mazmorras** pensado como base conceptual para aplicar **temple simulado** más adelante.
+Este proyecto genera **mazmorras 2D** usando **temple simulado**.
 
-## Idea del prototipo
+La idea principal es empezar con una mazmorra inicial válida, hacerle cambios pequeños y quedarse con la mejor versión encontrada según una **función de energía**.
 
-Se usa un enfoque **híbrido**:
+## Qué hace el proyecto
 
-1. **Grafo lógico**: representa habitaciones importantes y sus conexiones.
-2. **Grid espacial**: representa cómo esa estructura se traduce a un mapa jugable con paredes, pisos y salas.
+El generador construye una mazmorra con:
 
-La intención es separar la **topología** de la mazmorra de su **distribución espacial**. Eso después te permite optimizar cosas como:
+- habitaciones como `inicio`, `combate`, `tesoro`, `descanso`, `boss` y `salida`
+- conexiones entre habitaciones
+- una distribución lógica sobre una cuadrícula de `6 x 6`
+- una visualización final en dos imágenes
 
-- conectividad
-- distancia entre inicio y boss
-- profundidad de exploración
-- número de bifurcaciones
-- ubicación de recompensas
+Al terminar, el programa muestra un reporte en consola y guarda:
 
-## Archivo principal
+- `mazmorra-logica.png`
+- `mazmorra-espacial.png`
 
-- `mazmorra/mazmorra-estatica.py`
+## Cómo funciona
 
-## Cómo ejecutar
+El algoritmo sigue esta idea general:
+
+1. crea una mazmorra inicial válida
+2. evalúa su energía
+3. genera una variante cercana por mutación
+4. si la variante mejora, la acepta
+5. si empeora, a veces igual la acepta según la temperatura
+6. repite el proceso varias iteraciones
+7. devuelve la mejor mazmorra encontrada
+
+En este proyecto, **menor energía = mejor solución**.
+
+## Estructura básica
+
+- `main.py`: punto de entrada del programa
+- `temple_simulado.py`: núcleo del algoritmo de temple simulado
+- `mazmorra/generacion/`: creación inicial, mutaciones y render
+- `mazmorra/evaluacion/`: función de energía y métricas
+
+## Requisitos
+
+Dependencias principales:
+
+- `numpy`
+- `matplotlib`
+
+## Cómo ejecutarlo
 
 Desde la raíz del proyecto:
 
 ```bash
-python mazmorra/mazmorra-estatica.py
+uv venv .venv
+uv pip install -r requirements.txt
+uv run main.py --iteraciones 300
 ```
 
-## Qué genera
+Si querés fijar explícitamente la semilla:
 
-El script muestra y guarda una figura con dos paneles:
+```bash
+uv run main.py --semilla 10 --iteraciones 300
+```
 
-- **izquierda:** estructura lógica de la mazmorra como grafo
-- **derecha:** representación espacial sobre grid
+## Parámetros más importantes
 
-También guarda la imagen en:
+- `--semilla`: controla la reproducibilidad de la generación
+- `--iteraciones`: cantidad de iteraciones del temple simulado
+- `--imagen-logica`: nombre o ruta de la imagen lógica de salida
+- `--imagen-espacial`: nombre o ruta de la imagen espacial de salida
 
-- `mazmorra/mazmorra-estatica.png`
+## Salida esperada
 
-## Qué representa cada color en el grid
+El programa imprime un resumen como este:
 
-- negro: pared
-- gris claro: piso transitable
-- verde: punto de inicio
-- azul: salida
-- amarillo/naranja: tesoro
-- rojo: sala del boss
+- semilla usada
+- cantidad de iteraciones
+- energía inicial y final
+- mejora lograda
+- cantidad de vecinos aceptados y rechazados
+- mejor iteración encontrada
 
-## Siguiente paso natural
-
-El siguiente paso sería definir una **función de energía** para temple simulado, por ejemplo penalizando:
-
-- salas desconectadas
-- boss demasiado cerca del inicio
-- pasillos excesivamente largos
-- poca ramificación
-- tesoro en zonas triviales
+Además, guarda las imágenes de la mazmorra generada.
