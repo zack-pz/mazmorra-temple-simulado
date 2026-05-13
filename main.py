@@ -30,6 +30,8 @@ def imprimir_reporte(resultado) -> None:
     evaluacion = resultado.evaluacion
     evaluacion_inicial = resultado.evaluacion_inicial
     estadisticas_recocido = resultado.estadisticas_recocido
+    tasa_aceptacion = estadisticas_recocido.get("tasa_aceptacion", 0.0)
+    factible_para_reporte = evaluacion["factible"] and tasa_aceptacion <= 0.5
 
     print("=" * 60)
     print("GENERACIÓN DE MAZMORRA CON TEMPLE SIMULADO")
@@ -40,7 +42,7 @@ def imprimir_reporte(resultado) -> None:
     print(f"Energía final: {resultado.energia_final:.2f}")
     print(f"Mejora absoluta: {estadisticas_recocido.get('mejora_absoluta', 0.0):.2f}")
     print(f"Mejora porcentual: {estadisticas_recocido.get('mejora_porcentual', 0.0):.2f}%")
-    print(f"¿Es factible?: {'sí' if evaluacion['factible'] else 'no'}")
+    print(f"¿Es factible?: {'sí' if factible_para_reporte else 'no'}")
 
     print("\nEfecto del temple simulado")
     print(f"- vecinos_generados: {estadisticas_recocido.get('vecinos_generados', 0)}")
@@ -49,7 +51,7 @@ def imprimir_reporte(resultado) -> None:
     print(f"- mejoras_directas_aceptadas: {estadisticas_recocido.get('mejoras_directas_aceptadas', 0)}")
     print(f"- empeoramientos_aceptados: {estadisticas_recocido.get('empeoramientos_aceptados', 0)}")
     print(f"- empeoramientos_rechazados: {estadisticas_recocido.get('empeoramientos_rechazados', 0)}")
-    print(f"- tasa_aceptacion: {estadisticas_recocido.get('tasa_aceptacion', 0.0):.2%}")
+    print(f"- tasa_aceptacion: {tasa_aceptacion:.2%}")
     print(f"- mejor_iteracion: {estadisticas_recocido.get('iteracion_mejor', -1)}")
     print(f"- energia_maxima_visitada: {estadisticas_recocido.get('energia_maxima_visitada', resultado.energia_inicial):.2f}")
 
