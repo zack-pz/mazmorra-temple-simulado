@@ -42,6 +42,7 @@ class PesosObjetivo:
     tesoros_bloqueados_dura: float = 900.0
     salida_lejos_suave: float = 70.0
     interes_tesoros_suave: float = 45.0
+    camino_sin_cofres_suave: float = 85.0
     progresion_dificultad_suave: float = 80.0
     salas_vacias_suave: float = 55.0
     proporcion_piso_suave: float = 30.0

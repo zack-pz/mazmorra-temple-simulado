@@ -11,6 +11,7 @@ from mazmorra.evaluacion.penalizaciones import (
     penalizacion_dispersion_cuadricula,
     penalizacion_exceso_grado_dos,
     penalizacion_faltante_normalizada,
+    penalizacion_camino_sin_cofres,
     penalizacion_interes_tesoros,
     penalizacion_lineas_excesivas,
     penalizacion_ocupacion_cuadricula,
@@ -84,6 +85,7 @@ def evaluar_mazmorra(
         habitaciones_tesoro=habitaciones_tesoro,
         distancia_salida_ideal=ideal_salida,
     )
+    penalizacion_suave_camino_sin_cofres = penalizacion_camino_sin_cofres(estado.habitaciones, camino_principal)
     penalizacion_suave_progresion_dificultad = penalizacion_progresion_dificultad(estado.habitaciones, distancias_desde_inicio)
     penalizacion_suave_salas_vacias = penalizacion_salas_vacias(estado.habitaciones)
     penalizacion_suave_proporcion_piso = penalizacion_rango(proporcion_actual_piso, 0.22, 0.50)
@@ -104,6 +106,7 @@ def evaluar_mazmorra(
         "tesoros_bloqueados_dura": penalizacion_dura_tesoros_bloqueados,
         "salida_lejos_suave": penalizacion_suave_salida_lejos,
         "interes_tesoros_suave": penalizacion_suave_interes_tesoros,
+        "camino_sin_cofres_suave": penalizacion_suave_camino_sin_cofres,
         "progresion_dificultad_suave": penalizacion_suave_progresion_dificultad,
         "salas_vacias_suave": penalizacion_suave_salas_vacias,
         "proporcion_piso_suave": penalizacion_suave_proporcion_piso,
@@ -124,6 +127,7 @@ def evaluar_mazmorra(
         "tesoros_bloqueados_dura": penalizaciones["tesoros_bloqueados_dura"] * pesos.tesoros_bloqueados_dura,
         "salida_lejos_suave": penalizaciones["salida_lejos_suave"] * pesos.salida_lejos_suave,
         "interes_tesoros_suave": penalizaciones["interes_tesoros_suave"] * pesos.interes_tesoros_suave,
+        "camino_sin_cofres_suave": penalizaciones["camino_sin_cofres_suave"] * pesos.camino_sin_cofres_suave,
         "progresion_dificultad_suave": penalizaciones["progresion_dificultad_suave"] * pesos.progresion_dificultad_suave,
         "salas_vacias_suave": penalizaciones["salas_vacias_suave"] * pesos.salas_vacias_suave,
         "proporcion_piso_suave": penalizaciones["proporcion_piso_suave"] * pesos.proporcion_piso_suave,
@@ -159,6 +163,12 @@ def evaluar_mazmorra(
             "distancia_boss_a_salida": None if distancia_boss_a_salida == inf else distancia_boss_a_salida,
             "cantidad_grados_invalidos": cantidad_grados_invalidos,
             "tesoros_bloqueados": tesoros_bloqueados,
+            "habitaciones_camino_principal_sin_cofre": sum(
+                1
+                for nombre in camino_principal
+                if estado.habitaciones[nombre].get("tipo") not in {"inicio", "boss", "salida"}
+                and estado.habitaciones[nombre].get("cofres", 0) <= 0
+            ),
             "proporcion_piso": proporcion_actual_piso,
             "boss_en_camino_principal": boss_en_camino,
             "filas_usadas": int(resumen_cuadricula["filas_usadas"]),

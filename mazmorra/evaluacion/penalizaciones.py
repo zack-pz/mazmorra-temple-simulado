@@ -89,6 +89,27 @@ def penalizacion_interes_tesoros(
     return sum(penalizaciones) / len(penalizaciones)
 
 
+def penalizacion_camino_sin_cofres(
+    habitaciones: dict[str, dict],
+    camino_principal: list[str],
+) -> float:
+    if not camino_principal:
+        return 1.0
+
+    habitaciones_evaluables = [
+        nombre
+        for nombre in camino_principal
+        if tipo_habitacion(habitaciones[nombre]) not in {"inicio", "boss", "salida"}
+    ]
+    if not habitaciones_evaluables:
+        return 0.0
+
+    habitaciones_sin_cofre = [
+        nombre for nombre in habitaciones_evaluables if habitaciones[nombre].get("cofres", 0) <= 0
+    ]
+    return len(habitaciones_sin_cofre) / len(habitaciones_evaluables)
+
+
 def penalizacion_progresion_dificultad(
     habitaciones: dict[str, dict],
     distancias_desde_inicio: dict[str, int],
