@@ -20,7 +20,6 @@ def generar_mazmorra(configuracion: ConfiguracionGenerador | None = None) -> Res
     evaluacion_actual = evaluar_mazmorra(estado_actual)
     evaluacion_inicial = deepcopy(evaluacion_actual)
 
-    mejor = deepcopy(actual)
     mejor_estado = estado_actual
     mejor_evaluacion = evaluacion_actual
     energia_inicial = evaluacion_actual["energia"]
@@ -70,7 +69,6 @@ def generar_mazmorra(configuracion: ConfiguracionGenerador | None = None) -> Res
                 empeoramientos_rechazados += 1
 
         if evaluacion_actual["energia"] < mejor_evaluacion["energia"]:
-            mejor = deepcopy(actual)
             mejor_estado = estado_actual
             mejor_evaluacion = evaluacion_actual
             iteracion_mejor = iteracion

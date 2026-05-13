@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from math import ceil, inf
+from math import ceil
 from typing import Iterable
 
 import numpy as np

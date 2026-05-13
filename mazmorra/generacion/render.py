@@ -6,7 +6,7 @@ from matplotlib.colors import ListedColormap
 from matplotlib.patches import Patch, Rectangle
 
 from mazmorra.evaluacion import EstadoMazmorra
-from mazmorra.generacion.constantes import TILE_BOSS, TILE_INICIO, TILE_PARED, TILE_PISO, TILE_SALIDA, TILE_TESORO
+from mazmorra.generacion.constantes import TILE_PARED, TILE_PISO
 from mazmorra.generacion.topologia import COLUMNAS_CUADRICULA_LOGICA, FILAS_CUADRICULA_LOGICA, validar_cuadricula_logica
 
 
